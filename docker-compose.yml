@@ -1,0 +1,34 @@
+version: '3.4'
+
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:10
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    volumes:
+      - ./data:/docker-entrypoint-initdb.d
+
+  api:
+    restart: always
+    container_name: api
+    build: .
+    ports:
+      - "8000:8000"
+    command: >
+      bash -c "
+      python manage.py migrate &&
+      python manage.py collectstatic --no-input &&
+      python manage.py runserver 0.0.0.0:8000"
+    depends_on:
+      - postgres
+    environment:
+      DB_API_HOST: postgres
+      DB_API_PORT: 5432
+      DB_API_NAME: postgres
+      DB_API_USER: postgres
+      DB_API_PASSWORD:
+    volumes:
+      - .:/app
